@@ -5,12 +5,10 @@
 /* TODO: implement bc_char2bits */
 int *bc_char2bits(int ch, int *bits){
   int i;
+  printf("%c\n",ch);
   for(i=0; i<BC_NBITS; ++i){ 
-    printf("%d\n", ch);
     bits[i]=(ch%2);
-    printf("%d\n", ch);
     ch=ch/2;
-    printf("%d\n", ch);
   }  
   return bits;  
 }
