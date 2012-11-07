@@ -28,17 +28,18 @@ int main(int argc, char** argv){
     return 0;
   }
 
-  
-  unsigned int word;
-  unsigned int checksum;
   FILE *fp = fopen(fileName, "r");
   if(fp==0){
     printf("The filename argument you provided is not valid\n");
     return 0;
   }
-  fread(&checksum, sizeof(checksum), 1, fp);
-  while (fread(&word, sizeof(word), 1, fp)){
+  unsigned int word = 0;
+  unsigned int checksum = 0;
+  
+  fread(&checksum, 1,sizeof(checksum), fp);
+  while (fread(&word, 1,sizeof(word), fp)){
     checksum^=word;
+    word = 0;
   }
   if (FLAG==1){
     printf("0x%X\n",checksum);
