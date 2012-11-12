@@ -5,7 +5,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "xsum.h"
-void newFile(char* newName,char* name, int fileCount);
+void getNewPrefix(char* newName,char* name, int fileCount);
 
 
 int main(int argc, char** argv){
@@ -13,26 +13,26 @@ int main(int argc, char** argv){
   int CHUNK_SIZE=1024;
   int CHECK_CHKSUM=0;
   int fileCount=0;
-  int isFinished=1;
-  unsigned int givenChecksum = 0,foundChecksum;
-  char* prefix, output;
-  int opt;
+  unsigned int givenChecksum = 0,foundChecksum=0;
+  char *prefix,*output;
+  int opt,outputChanged=0;
   
   while((opt = getopt(argc, argv,"-hx:o:"))!=-1){
     switch (opt) {
       case 1:
-	output = prefix = optarg;
+	prefix = optarg;
 	break;
       case 'h':
-	printf("OPTIONS\n\t-h  print a summary of options and exit\n\t-x  print the checksum as a hexadecimal rather than decimal number.\n");
+	printf("OPTIONS\n\t-h\t\tprint summary of options and exit\n\t-o OUTPUT\twrite the output into OUTPUT instead of PREFIX\n\t-x CHECKSUM\tverify that the checksum of the produced file is CHECKSUM\n");
 	exit(0);
       case 'x':
 	CHECK_CHKSUM=1;
 	givenChecksum = atoi(optarg);
-	output = prefix = argv[argc-1];
+	prefix = argv[argc-1];
 	break;
       case 'o':
 	if(optarg!=0) output = optarg;
+	outputChanged = 1;
 	prefix = argv[argc-1];
 	break;  
       default:
@@ -40,51 +40,70 @@ int main(int argc, char** argv){
 	exit(1);
     }
   } 
-    
-  FILE *fp = fopen(output, "w+");
-  
-  unsigned char chunk[CHUNK_SIZE];
-  memset(chunk,0,CHUNK_SIZE);
-  unsigned char checksum = 0;
+  struct stat st = {0};
+  if (stat("parts", &st) == -1) {
+    printf("Could not find the \"parts\" folder created by bsplit\n");
+    exit(0);
+   }
+  if(outputChanged==0) output = prefix;  
+  FILE *fp = fopen(output, "a");
+  char chunk[1];
+  unsigned int chunksum=0, calcSum=0;
   int fileSize = 0;
+  int firstChunk = 0; 
+  int read;
   
- 
-  while (isFinished){
-    
-    char * newPrefix[strlen(prefix)+15];
-    newPrefixName(newPrefix,prefix,fileCount);
-    FILE *chunk = fopen(newPrefix, "r");
-
-    if ((fileSize = fread(&chunk, 1, CHUNK_SIZE, fp))==0) break;
-    unsigned int chunksum=0;
-    char newFileName[strlen(fileName)+15];  
+  while (1){
     fileCount++;
-    newFile(newFileName,fileName,fileCount);
-    FILE* file = fopen(newFileName,"w+");
-    fwrite(&chunksum,sizeof(chunksum),1,file);
-    fwrite(&chunk,fileSize,1,file);
-    chunksum = chksum(file);
-    fileChecksum^=chunksum;
-    rewind(file);
-    fwrite(&chunksum,sizeof(chunksum),1,file);
-    memset(chunk,0,CHUNK_SIZE);
-    if (fileSize<CHUNK_SIZE){
-      isFinished=0;
-      fclose(file);
+    char newPrefix[strlen(prefix)+15];
+    getNewPrefix(newPrefix,prefix,fileCount);
+    FILE *chunkFile = fopen(newPrefix, "r");
+    if(chunkFile==0){
+      if(fileCount==1){
+	printf("Could not find the file %s\n",newPrefix);
+	exit(0);
+      }
+      else{
+	fclose(fp);
+	break;
+      }
     }
+    if(fread(&chunksum, sizeof(chunksum),1,chunkFile)==0) {
+      printf("Could not read from the file %s\n",newPrefix);
+      exit(0);
+    }
+    calcSum = chksum(chunkFile);
+    fseek(chunkFile,sizeof(chunksum),SEEK_SET);
+    if(calcSum!=chunksum){
+      printf("The Checksum for %s is not identical to the stored value\n",newPrefix);
+      exit(0);
+    }
+    while ((fread(chunk, 1, 1, chunkFile))!=0){
+      fwrite(&chunk,1,1,fp);
+    }
+    if(firstChunk==0){
+      foundChecksum = chunksum;
+      firstChunk = 1;
+    } else {
+      foundChecksum^=chunksum;
+    }
+    chunksum = calcSum = 0;
+    fclose(chunkFile);
   }
 
-
-  if (CALL_CHKSUM==1){
-    if (fileChecksum !=0){
-      printf("Checksum: 0x%X\n",fileChecksum);
+  if (CHECK_CHKSUM==1){
+    if (givenChecksum != foundChecksum){
+      printf("The given Checksum is not identical to the calculated Checksum - something went wrong :-(\n");
+    }
+    else{
+      printf("The Checksums are identical!\n");
     }
   }
 
 return 0;
 }
 
-void newPrefixName(char* newName,char* name, int fileCount){
+void getNewPrefix(char* newName,char* name, int fileCount){
   char num[5] = {0};
   sprintf(num,"%d",fileCount);
   newName[0] = 0;

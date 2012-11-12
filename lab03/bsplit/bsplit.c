@@ -24,7 +24,7 @@ int main(int argc, char** argv){
 	fileName = optarg;
 	break;
       case 'h':
-	printf("OPTIONS\n\t-h  print a summary of options and exit\n\t-x  print the checksum as a hexadecimal rather than decimal number.\n");
+	printf("OPTIONS\n\t-h\t\tprint a summary of options and exit\n\t-b SIZE\t\tput at most SIZE bytes per output file\n\t-x\t\tprint the checksum as a hexadecimal rather than decimal number.\n");
 	exit(0);
       case 'x':
 	CALL_CHKSUM=1;
@@ -76,7 +76,7 @@ int main(int argc, char** argv){
 
   if (CALL_CHKSUM==1){
     if (fileChecksum !=0){
-      printf("Checksum: 0x%X\n",fileChecksum);
+      printf("Checksum: %u\n",fileChecksum);
     }
   }
 

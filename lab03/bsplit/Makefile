@@ -4,7 +4,7 @@
 %.man: %.1
 	nroff -man $< > $@
 
-all: distclean bsplit  bsplit.man bmerge.man
+all: distclean bsplit bmerge bsplit.man bmerge.man
 
 bsplit: bsplit.o xsum.o
 	$(CC) $(LDFLAGS) -o $@ $^
