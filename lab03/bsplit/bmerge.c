@@ -10,50 +10,51 @@ void newFile(char* newName,char* name, int fileCount);
 
 int main(int argc, char** argv){
 
-  int CALL_CHKSUM=0;
   int CHUNK_SIZE=1024;
+  int CHECK_CHKSUM=0;
   int fileCount=0;
   int isFinished=1;
-  unsigned int fileChecksum = 0;
-  char* fileName;
+  unsigned int givenChecksum = 0,foundChecksum;
+  char* prefix, output;
   int opt;
   
-  while((opt = getopt(argc, argv,"-hx:b:"))!=-1){
+  while((opt = getopt(argc, argv,"-hx:o:"))!=-1){
     switch (opt) {
       case 1:
-	fileName = optarg;
+	output = prefix = optarg;
 	break;
       case 'h':
 	printf("OPTIONS\n\t-h  print a summary of options and exit\n\t-x  print the checksum as a hexadecimal rather than decimal number.\n");
 	exit(0);
       case 'x':
-	CALL_CHKSUM=1;
-	fileName = argv[argc-1];
+	CHECK_CHKSUM=1;
+	givenChecksum = atoi(optarg);
+	output = prefix = argv[argc-1];
 	break;
-      case 'b':
-	if(optarg!=0) CHUNK_SIZE = atoi(optarg);
-	fileName = argv[argc-1];
+      case 'o':
+	if(optarg!=0) output = optarg;
+	prefix = argv[argc-1];
 	break;  
       default:
-	fprintf(stderr,"Usage: %s [-h] [-x] [-b SIZE] FILE\n",argv[0]);
+	fprintf(stderr,"Usage: %s [-h] [-x CHECKSUM] [-0 OUTPUT] FILE\n",argv[0]);
 	exit(1);
     }
   } 
-  FILE *fp = fopen(fileName, "r");
-  if(fp==0){
-    printf("The filename argument you provided is not valid\n");
-    return 0;
-  }
+    
+  FILE *fp = fopen(output, "w+");
+  
   unsigned char chunk[CHUNK_SIZE];
   memset(chunk,0,CHUNK_SIZE);
   unsigned char checksum = 0;
   int fileSize = 0;
-  struct stat st = {0};
-  if (stat("parts", &st) == -1) {
-    mkdir("parts", 0700);
-  }
+  
  
   while (isFinished){
+    
+    char * newPrefix[strlen(prefix)+15];
+    newPrefixName(newPrefix,prefix,fileCount);
+    FILE *chunk = fopen(newPrefix, "r");
+
     if ((fileSize = fread(&chunk, 1, CHUNK_SIZE, fp))==0) break;
     unsigned int chunksum=0;
     char newFileName[strlen(fileName)+15];  
@@ -83,7 +84,7 @@ int main(int argc, char** argv){
 return 0;
 }
 
-void newFile(char* newName,char* name, int fileCount){
+void newPrefixName(char* newName,char* name, int fileCount){
   char num[5] = {0};
   sprintf(num,"%d",fileCount);
   newName[0] = 0;
