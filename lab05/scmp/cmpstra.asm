@@ -8,7 +8,7 @@ loop:
 	movzx	ebx, BYTE [ebx]
 	mov 	ecx, [ebp+12]
 	movzx	ecx, BYTE [ecx]
-	cmp	ebx,0
+	test	ebx,ebx
 	je	after
 	cmp 	ebx, ecx
 	jne	after
