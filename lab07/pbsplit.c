@@ -11,7 +11,7 @@ void makeChunk(FILE *fp, int CHUNK_SIZE, int fileCount, char *fileName);
 int main(int argc, char** argv){
 
   int CHUNK_SIZE=1024;
-  int processNum = 10;
+  int maxProcess = 10;
   char* fileName;
   int opt;
   
@@ -31,7 +31,7 @@ int main(int argc, char** argv){
 	fileName = argv[argc-1];
 	break;
       case 'p':
-      if(optarg!=0) processNum = atoi(optarg);
+      if(optarg!=0) maxProcess = atoi(optarg);
       fileName = argv[argc-1];
       break;  
       default:
@@ -55,11 +55,29 @@ int main(int argc, char** argv){
   int numOfChunks=((ftell(fp) + CHUNK_SIZE-5)/CHUNK_SIZE);
   int fileCount = 1;
   rewind(fp);
-  printf("%d\n",numOfChunks);
+  int i,j;
+  
   while (numOfChunks>0){
-    makeChunk(fp, CHUNK_SIZE, fileCount, fileName);
-    numOfChunks--;
-    fileCount++;
+    pid_t pids[maxProcess];
+    for (i=0; i<maxProcess; i++){
+      pid_t cpid = fork();
+      if (cpid == -1) {
+	perror("fork");    
+	exit(EXIT_FAILURE); 
+      }
+      if (cpid == 0){
+	makeChunk(fp, CHUNK_SIZE, fileCount, fileName);
+	exit(0);
+      }
+      else{
+	pids[i]=cpid;
+	numOfChunks--;
+	fileCount++;
+      }
+    }
+    for(j=0;j<maxProcess;j++){
+      waitpid(pids[j],NULL,1);
+    }
   }
   fclose(fp);
 return 0;
@@ -76,12 +94,12 @@ void newFile(char* newName,char* name, int fileCount){
   strcat(newName,num);
 }
 
-// int numOfChunks=(filesize+chunksize-1)/chunksize
-
 void makeChunk (FILE *fp, int CHUNK_SIZE, int fileCount, char *fileName){
+  int offset = fileCount*CHUNK_SIZE;
   int read = 0;
   unsigned char chunk[CHUNK_SIZE];
   unsigned char checksum = 0;
+  fseek(fp,offset,SEEK_SET);
   if ((read = fread(&chunk, 1, CHUNK_SIZE, fp))==0) return;
   unsigned int chunksum=0;
   char newFileName[strlen(fileName)+15];  
