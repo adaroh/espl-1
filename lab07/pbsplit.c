@@ -21,10 +21,10 @@ int main(int argc, char** argv){
 	fileName = optarg;
 	break;
       case 'h':
-	printf("OPTIONS\n\t-h\t\tprint a summary of options and exit\n\t-b SIZE\t\tput at most SIZE bytes per output file\n\t-x\t\tprint the checksum as a hexadecimal rather than decimal number.\n");
+	printf("Usage: %s [-h] [-x] [-b SIZE] [-p PROCESSES] FILE\n\nOPTIONS\n\t-h\t\tprint a summary of options and exit\n\t-b SIZE\t\tput at most SIZE bytes per output file\n\t-x\t\tprint the checksum of the file.(DISABLED)\n\t-p\t\tmaximum number of child processes.\n",argv[0]);
 	exit(0);
       case 'x':
-	printf("This option has been disabled\n");
+	printf("The -x option has been disabled\n");
 	exit(0);
       case 'b':
 	if(optarg!=0) CHUNK_SIZE = atoi(optarg);
@@ -32,10 +32,14 @@ int main(int argc, char** argv){
 	break;
       case 'p':
       if(optarg!=0) maxProcess = atoi(optarg);
+      if(maxProcess<=0){
+	printf("Please provide a valid number of processes");
+	exit(0);
+      }
       fileName = argv[argc-1];
       break;  
       default:
-	fprintf(stderr,"Usage: %s [-h] [-x] [-b SIZE] FILE\n",argv[0]);
+	fprintf(stderr,"Usage: %s [-h] [-x DISABLED] [-b SIZE] [-p PROCESSES] FILE\n",argv[0]);
 	exit(1);
     }
   } 
@@ -52,14 +56,16 @@ int main(int argc, char** argv){
   }
   
   fseek(fp,0,SEEK_END);
-  int numOfChunks=((ftell(fp) + CHUNK_SIZE-5)/CHUNK_SIZE);
+  int numOfChunks=((ftell(fp) + CHUNK_SIZE-1)/CHUNK_SIZE);
   int fileCount = 1;
   rewind(fp);
   int i,j;
   
   while (numOfChunks>0){
-    pid_t pids[maxProcess];
-    for (i=0; i<maxProcess; i++){
+    int min = (maxProcess < numOfChunks ? maxProcess : numOfChunks);
+    pid_t pids[min];
+    for (i=0; i<min; i++){
+      flockfile(fp);
       pid_t cpid = fork();
       if (cpid == -1) {
 	perror("fork");    
@@ -67,15 +73,16 @@ int main(int argc, char** argv){
       }
       if (cpid == 0){
 	makeChunk(fp, CHUNK_SIZE, fileCount, fileName);
-	exit(0);
+	return 0;
       }
       else{
+	funlockfile(fp);
 	pids[i]=cpid;
 	numOfChunks--;
 	fileCount++;
       }
     }
-    for(j=0;j<maxProcess;j++){
+    for(j=0;j<min;j++){
       waitpid(pids[j],NULL,1);
     }
   }
@@ -95,7 +102,7 @@ void newFile(char* newName,char* name, int fileCount){
 }
 
 void makeChunk (FILE *fp, int CHUNK_SIZE, int fileCount, char *fileName){
-  int offset = fileCount*CHUNK_SIZE;
+  int offset = (fileCount-1)*CHUNK_SIZE;
   int read = 0;
   unsigned char chunk[CHUNK_SIZE];
   unsigned char checksum = 0;
