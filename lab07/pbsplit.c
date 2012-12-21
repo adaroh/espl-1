@@ -57,26 +57,23 @@ int main(int argc, char** argv){
   
   fseek(fp,0,SEEK_END);
   int numOfChunks=((ftell(fp) + CHUNK_SIZE-1)/CHUNK_SIZE);
-  int fileCount = 1;
   rewind(fp);
+  int fileCount = 1;
   int i,j;
   
   while (numOfChunks>0){
-    int min = (maxProcess < numOfChunks ? maxProcess : numOfChunks);
+    int min = (maxProcess <= numOfChunks ? maxProcess : numOfChunks);
     pid_t pids[min];
     for (i=0; i<min; i++){
-      flockfile(fp);
       pid_t cpid = fork();
       if (cpid == -1) {
 	perror("fork");    
 	exit(EXIT_FAILURE); 
       }
-      if (cpid == 0){
+      else if (cpid == 0){
 	makeChunk(fp, CHUNK_SIZE, fileCount, fileName);
-	return 0;
       }
       else{
-	funlockfile(fp);
 	pids[i]=cpid;
 	numOfChunks--;
 	fileCount++;
@@ -102,13 +99,14 @@ void newFile(char* newName,char* name, int fileCount){
 }
 
 void makeChunk (FILE *fp, int CHUNK_SIZE, int fileCount, char *fileName){
-  int offset = (fileCount-1)*CHUNK_SIZE;
+  freopen(fileName,"r",fp); //without this the data in the chunks is not correct
+  int offset = ((fileCount-1)*CHUNK_SIZE);
   int read = 0;
+  unsigned int chunksum=0;
   unsigned char chunk[CHUNK_SIZE];
   unsigned char checksum = 0;
   fseek(fp,offset,SEEK_SET);
   if ((read = fread(&chunk, 1, CHUNK_SIZE, fp))==0) return;
-  unsigned int chunksum=0;
   char newFileName[strlen(fileName)+15];  
   newFile(newFileName,fileName,fileCount);
   FILE* file = fopen(newFileName,"w+");
@@ -118,4 +116,5 @@ void makeChunk (FILE *fp, int CHUNK_SIZE, int fileCount, char *fileName){
   rewind(file);
   fwrite(&chunksum,sizeof(chunksum),1,file);
   fclose(file);
+  exit(0);
 }
