@@ -99,7 +99,7 @@ void newFile(char* newName,char* name, int fileCount){
 }
 
 void makeChunk (FILE *fp, int CHUNK_SIZE, int fileCount, char *fileName){
-  freopen(fileName,"r",fp); //without this the data in the chunks is not correct
+  //freopen(fileName,"r",fp); //without this the data in the chunks is not correct
   int offset = ((fileCount-1)*CHUNK_SIZE);
   int read = 0;
   unsigned int chunksum=0;
