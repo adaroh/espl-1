@@ -105,6 +105,13 @@ void run_program() {
     for(i=1;i<argc;i++){
       if(strcmp(argv[i],"|")==0){
 	int pipefd[2];
+	int p = pipe(pipefd);
+	if (p!=0) exit(1);
+	
+	
+	break;
+      }
+	
   
   
   
