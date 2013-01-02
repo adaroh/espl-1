@@ -101,19 +101,46 @@ void run_program() {
   /* TODO: input, output redirection */
   /* TODO: pipelines */
   /* TODO: background commands */
-  if(argc>2){
-    for(i=1;i<argc;i++){
-      if(strcmp(argv[i],"|")==0){
-	int pipefd[2];
-	int p = pipe(pipefd);
-	if (p!=0) exit(1);
-	
-	
+  if(argc>2){ //check to see if a pipe is given in the arguments
+    char **a = argv;
+    int pipefd[2];
+    while(*a){
+      if(strcmp(*a,"|")==0){
+	if(pipe(pipefd)!=0) exit(1);
+	*a=0;
+	++a;
+	pid=fork();
+	if(pid==0) {
+	  close(pipefd[0]);
+	  dup2(pipefd[1],1);
+	  close(pipefd[1]);
+	  execvp(argv[0], argv);
+	  perror(argv[0]);
+	} else if (pid>0){
+	    pid=fork();
+	    if(pid==0) {
+	    close(pipefd[1]);
+	    dup2(pipefd[0],0);
+	    close(pipefd[0]);
+	    execvp(*a, a);
+	    perror(a[0]);
+	    } else if (pid>0){
+	      close(pipefd[0]);
+	      close(pipefd[1]);
+	      waitpid(pid,&status, 0);
+	      return;
+	    } else {
+		perror(getenv("SHELL")); /* problem while forking, not due to a particular program */
+	    }
+	} else {
+	    perror(getenv("SHELL")); /* problem while forking, not due to a particular program */
+	}
+	printf("the pipe is in index %d\n",i);
 	break;
       }
-	
-  
-  
+      ++a;
+    }
+}
   
   if((pid=fork())>0) {
     waitpid(pid, &status, 0);
