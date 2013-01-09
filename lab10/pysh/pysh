@@ -1,0 +1,75 @@
+#!/usr/bin/env python
+
+import os, os.path, sys, getpass, shlex, subprocess
+
+home=os.getenv('HOME')
+
+def getcwd():
+    "like os.getcwd(), but collapses the home directory prefix into ~"
+    cwd = os.getcwd()
+    if cwd.startswith(home):
+        cwd = '~'+cwd[len(home):]
+    return cwd
+
+def run_program(argv):
+    stdin=sys.stdin
+    stdout=sys.stdout
+    arr=argv
+    if '<' in argv:
+      stdin=open(argv[argv.index('<')+1],'r')
+      arr=argv[:argv.index('<')]
+    elif '>' in argv:
+      stdout=open(argv[argv.index('>')+1],'w')
+      arr=argv[:argv.index('>')]
+    elif '|' in argv:
+      p1=subprocess.Popen(argv[:argv.index('|')],stdin=stdin,stdout=subprocess.PIPE)
+      stdin=p1.stdout
+      arr=argv[argv.index('|')+1:]
+    subprocess.call(arr,stdin=stdin,stdout=stdout)
+    if stdin is not sys.stdin:
+      stdin.close()
+    if stdout is not sys.stdout:
+      stdout.close()
+    return
+  
+def expand(argv):
+  for arg in argv:
+    if arg.startswith('$'):
+      index=argv.index(arg)
+      argv[index] = os.path.expandvars(arg)
+  return argv
+  
+while True:
+    print "%s@%s>" % (getpass.getuser(), getcwd()),
+
+    argv = None
+    try:
+        argv = shlex.split(raw_input())
+    except EOFError:
+        print
+        break                             # end of file from user, e.g. Ctrl-D
+
+    if not argv:
+        continue # empty command
+    
+    elif '=' in argv:
+      index=argv.index('=')
+      os.environ[argv[index-1]] = argv[index+1]
+    
+    elif argv[0] in ['exit', 'quit', 'bye']:
+      break
+    elif argv[0]=='cd':
+      try:
+        os.chdir(os.path.expanduser(argv[1])) # expand ~ to home directory
+      except IndexError:                   # no arguments, chdir to home dir
+        os.chdir(home)
+      except OSError, s:
+        print >>sys.stderr, "chdir: %s" % s
+    else:
+      run_program(expand(argv))
+
+# goodbye message
+goodbye = "have a good sunny day, see you back soon"
+print "*"+"-"*(len(goodbye)+2)+"*"
+print "| %s |" % goodbye
+print "*"+"-"*(len(goodbye)+2)+"*"
