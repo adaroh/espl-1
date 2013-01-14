@@ -1,4 +1,0 @@
-b.txt
-pysh
-pysh~
-temp.txt
