@@ -7,6 +7,9 @@
 	if (48 <= event.keyCode && event.keyCode <= 57){
 	  event.returnValue=false;
 	}
+	else{
+	  showHint(document.forms["inputForm"]["username"].value);
+	}
       }
       function validate(event){
 	var pwd=document.forms["inputForm"]["password"].value
@@ -24,9 +27,9 @@
 	  document.getElementById('a1').innerHTML = '<b>You are now logged in as '+ user +'</b>';
 	}
       }
-     /* function showHint(str)
+     function showHint(str)
       {
-	varxmlhttp;
+	var xmlhttp;
 	if (str.length==0){
 	document.getElementById("txtHint").innerHTML="";
 	return;
@@ -44,9 +47,9 @@
 	document.getElementById("txtHint").innerHTML=xmlhttp.responseText;
 	}
 	}
-	xmlhttp.open("GET","http://www.cs.bgu.ac.il/~abedas/remote_service.php?q="+str,true);
+	xmlhttp.open("GET","http://www.cs.bgu.ac.il/~yarivz/suggest.php?q="+str,true);
 	xmlhttp.send();
-      }*/
+      }
      </script>
   </head>
   <body>
@@ -54,7 +57,7 @@
       <form name="inputForm">
 	Username: <input onkeypress="noNumbers(event)" type="text" name="username">
 	Password: <input type="password" name="password"><br>
-	<p> Suggestion: </p>
+	<p id="txtHint"> Suggestion: </p>
       <input onclick="validate(event)" type="button" value="Submit">
       </form>
     </div>
