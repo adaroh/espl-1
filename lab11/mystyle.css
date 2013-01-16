@@ -1,0 +1,22 @@
+body
+{
+background-color:darkgrey;
+}
+#a1
+{
+color:darkblue;
+text-align:right;
+}
+#a1 p{padding-right:423px}
+#a1 b{color:red;}
+#a2 p{color:black;text-align:left;}
+#a2 h1 {text-decoration:underline;color:darkblue;text-align:left;}
+#a3
+{
+text-align:right;
+}
+#a4
+{
+color:red;text-decoration:bold;text-align:center;font-size:20px;
+}
+#a4 img:hover{visibility:hidden}

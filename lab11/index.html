@@ -1,0 +1,75 @@
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="mystyle.css">
+    <title>Yariv's Site</title>
+    <script>
+      function noNumbers(event){
+	if (48 <= event.keyCode && event.keyCode <= 57){
+	  event.returnValue=false;
+	}
+      }
+      function validate(event){
+	var pwd=document.forms["inputForm"]["password"].value
+	var user=document.forms["inputForm"]["username"].value
+	var x=pwd.charCodeAt(0);
+	if (pwd.length<4 || pwd==null || user==null || pwd=="" || user==""){
+  	  event.returnValue=false;
+	  alert("Password or Username are invalid");
+	}
+	else if (!(65 <= x && x <= 90) && !(97 <= x && x <= 122)){
+	  event.returnValue=false;
+	  alert("Password must begin with a letter");
+	}
+	else {
+	  document.getElementById('a1').innerHTML = '<b>You are now logged in as '+ user +'</b>';
+	}
+      }
+     /* function showHint(str)
+      {
+	varxmlhttp;
+	if (str.length==0){
+	document.getElementById("txtHint").innerHTML="";
+	return;
+	}
+	if (window.XMLHttpRequest){// IE7+,Firefox,Chrome,Opera, Safari
+	xmlhttp=new XMLHttpRequest();
+	}
+	else{// code for IE6, IE5
+	xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+	}
+	xmlhttp.onreadystatechange=function()
+	{
+	if (xmlhttp.readyState==4 &&xmlhttp.status==200)
+	{
+	document.getElementById("txtHint").innerHTML=xmlhttp.responseText;
+	}
+	}
+	xmlhttp.open("GET","http://www.cs.bgu.ac.il/~abedas/remote_service.php?q="+str,true);
+	xmlhttp.send();
+      }*/
+     </script>
+  </head>
+  <body>
+    <div id="a1">
+      <form name="inputForm">
+	Username: <input onkeypress="noNumbers(event)" type="text" name="username">
+	Password: <input type="password" name="password"><br>
+	<p> Suggestion: </p>
+      <input onclick="validate(event)" type="button" value="Submit">
+      </form>
+    </div>
+    <div id="a2">
+      <h1><hr>Yariv Zur</h1>
+      <p>This is a lab assignment</p>
+      <p>I am a 3rd year Bio-Informatics student</p>
+      <p>I work at EMC</p>
+    </div>
+    <div id="a3">
+    <img src="me.jpg" width="580" height="419">
+    </div>
+    <div id="a4">
+      <p><hr>Pass your mouse over the image to get amused!</p>
+      <img src="pow.jpg" width="400" height="200">
+    </div>
+  </body>
+</html>
